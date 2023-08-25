@@ -20,25 +20,3 @@ class ObraArteDTO:
         self.registro_fotografico = registro_fotografico
         self.artista = artista
         self.valor_comercial = valor_comercial
-
-# Ejemplo de uso:
-obra_dto = ObraArteDTO(
-    fecha="Fecha de la obra",
-    codigo="Código de la obra",
-    ubicacion_obra="Ubicación de la obra",
-    distrito="Distrito",
-    departamento="Departamento",
-    autor="Autor de la obra",
-    titulo_obra="Título de la obra",
-    medio="Medio",
-    tiraje="Tiraje",
-    nacionalidad="Nacionalidad",
-    ano_creacion="Año de creación",
-    tecnica="Técnica",
-    observaciones_obra="Observaciones de la obra",
-    medidas="Medidas",
-    estado="Estado",
-    registro_fotografico="Registro fotográfico",
-    artista="Artista",
-    valor_comercial="Valor comercial"
-)

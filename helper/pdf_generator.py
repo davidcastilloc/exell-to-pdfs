@@ -3,13 +3,13 @@ from reportlab.pdfgen.canvas import Canvas
 from pdfrw import PdfReader
 from pdfrw.buildxobj import pagexobj
 from pdfrw.toreportlab import makerl
-from dto import ObraArteDTO
 
 
 class PDFGenerator:
-    def __init__(self, template_path, output_path):
+    def __init__(self, template_path, output_path, obra):
         self.template_path = template_path
         self.output_path = output_path
+        self.obra = obra
 
     def generate_pdf(self):
         template = PdfReader(self.template_path, decompress=False).pages[0]
@@ -22,11 +22,12 @@ class PDFGenerator:
 
         canvas.setFont("Helvetica", 9)
 
-        self._draw_fields(canvas)
+        self._draw_fields(canvas, self.obra)
 
         canvas.save()
 
     def _draw_fields(self, canvas, obra):
+        obra = self.obra
         fields = [
             (91, 689,  obra.fecha ),
             (152, 620, obra.codigo ),
@@ -49,11 +50,4 @@ class PDFGenerator:
         ]
 
         for x, y, text in fields:
-            canvas.drawString(x, y, text)
-
-if __name__ == "__main__":
-    template_path = "template.pdf"
-    output_path = "output.pdf"
-    
-    pdf_generator = PDFGenerator(template_path, output_path)
-    pdf_generator.generate_pdf()
+            canvas.drawString(x, y, str(text))
