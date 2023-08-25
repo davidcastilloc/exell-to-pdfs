@@ -13,7 +13,7 @@ class PDFGeneratorInterface:
     def run(self):
         init()
         self.show_banner()
-        print(Fore.GREEN,"Bienvenido al generador de PDF")
+        print(Fore.GREEN,"Bienvenido al generador de PDF.")
         self._generate_pdfs()
 
     def show_banner(self):
