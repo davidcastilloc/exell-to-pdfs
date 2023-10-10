@@ -1,15 +1,23 @@
 # clase propuesta para la solucion del problema
+import locale
+import logging
+import os
 from reportlab.pdfgen.canvas import Canvas
 from pdfrw import PdfReader
 from pdfrw.buildxobj import pagexobj
 from pdfrw.toreportlab import makerl
-
+from helper.image_compressor import Compressor
+from helper.config_module import Config
+import textwrap
+import datetime
+import numbers
 
 class PDFGenerator:
     def __init__(self, template_path, output_path, obra):
         self.template_path = template_path
         self.output_path = output_path
         self.obra = obra
+        locale.setlocale(locale.LC_ALL, 'es_PE')
 
     def generate_pdf(self):
         template = PdfReader(self.template_path, decompress=False).pages[0]
@@ -20,10 +28,10 @@ class PDFGenerator:
         xobj_name = makerl(canvas, template_obj)
         canvas.doForm(xobj_name)
 
-        canvas.setFont("Helvetica", 9)
+        canvas.setFont("Helvetica", 7)
 
         self._draw_fields(canvas, self.obra)
-
+        self._draw_images(canvas, self.obra)
         canvas.save()
 
     def _draw_fields(self, canvas, obra):
@@ -37,17 +45,81 @@ class PDFGenerator:
             (152,541, obra.autor),
             (152,525, obra.titulo_obra),
             (152,508, obra.medio),
-            (153,490, obra.tiraje),
+            (153,490, obra.edicion),
+            (253,490, obra.firma),
             (404,541, obra.nacionalidad),
             (404,525, obra.ano_creacion),
-            (404,507, obra.tecnica),
+            (404,508, obra.tecnica),
             (91, 459, obra.observaciones_obra),
             (338,490, obra.medidas),
             (452,490, obra.estado),
-            (91, 412, obra.registro_fotografico),
-            (91, 290, obra.artista),
             (91, 214, obra.valor_comercial),
         ]
+        
+        textbox = [
+            (91, 288+2, obra.artista),
+        ]
+
+        for x, y, text in textbox:
+            max_chars_per_line = 45
+            lines = textwrap.wrap(text, max_chars_per_line)
+            count = 0
+            z = 290
+            for line in lines:
+                if count<4:
+                    canvas.drawString(x, y, line)
+                    y -= 12
+                    count += 1
+                else:
+                    canvas.drawString(335, z, line)
+                    z -= 12
+                    count=count+1
+
 
         for x, y, text in fields:
-            canvas.drawString(x, y, str(text))
+            try:
+                if isinstance(text, datetime.datetime):
+                    canvas.drawString(x, y+1, text.strftime("%d %B, %Y"))
+                elif isinstance(text, numbers.Number):
+                    canvas.drawString(x, y+1, str(text))
+                elif isinstance(text, str):
+                    canvas.drawString(x, y+1, str(text))
+            except Exception as e:
+                logging.error(f"An exception occurred: {e}")
+            
+
+    def _draw_images(self, canvas, obra):
+        # Coordenadas de la posicion de la imagen
+        SCALE = 90
+        coord_img = [
+            (91+50, 328),
+            (335+50, 328),
+        ]
+
+        if obra.codigo == 'nan':
+            print(f"Image code invalid : {obra.codigo}")
+            return
+        
+        IMG_A_IN_ROUTE = os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'), f"{obra.registro_fotografico_a:08}.jpg")
+        IMG_A_OUT_ROUTE =  os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'),f"{obra.registro_fotografico_a:08}-opt.jpg")
+        
+        IMG_B_IN_ROUTE = os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'), f"{obra.registro_fotografico_b:08}.jpg")
+        IMG_B_OUT_ROUTE =  os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'),f"{obra.registro_fotografico_b:08}-opt.jpg")
+        
+        #PINTAMOS LA CARA A DE LA OBRA
+        if os.path.exists(IMG_A_IN_ROUTE):
+            try:
+                x , y = coord_img[0]
+                Compressor(IMG_A_IN_ROUTE, IMG_A_OUT_ROUTE).save()
+                canvas.drawImage(IMG_A_OUT_ROUTE, x, y, SCALE, SCALE)
+            except Exception as e:
+                print(e)
+
+        #PINTAMOS LA CARA B DE LA OBRA
+        if os.path.exists(IMG_B_IN_ROUTE):
+            try:
+                x , y = coord_img[1]
+                Compressor(IMG_B_IN_ROUTE, IMG_B_OUT_ROUTE).save()
+                canvas.drawImage(IMG_B_OUT_ROUTE, x, y, SCALE, SCALE)
+            except Exception as e:
+                print(e)
