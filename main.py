@@ -1,11 +1,13 @@
 ﻿import pyfiglet
 import pandas as pd
 from tqdm import tqdm
-import time
 from colorama import init, Fore
 from dto.obra import ObraArteDTO
 from helper.pdf_generator import PDFGenerator
 from helper.config_module import Config
+from helper.tools import clear
+import os
+__version__ = "1.0.0"
 
 class PDFGeneratorInterface:
     def __init__(self):
@@ -13,29 +15,32 @@ class PDFGeneratorInterface:
 
     def run(self):
         init()
+        clear()
         self.show_banner()
-        print(Fore.GREEN,"Bienvenido al generador de PDF.")
+        if not Config().is_valid():
+            #TODO: validar todas las rutas de la configuracion
+            print(Fore.RED, "Error: ")
+            input("La configuracion no se pudo cargar.\n")
+            input("Presiona [ENTER] para salir...\n")
+            return False
+        Config().print_config()
+        input("Presiona [ENTER] para continuar...\n")
         self._generate_pdfs()
 
     def show_banner(self):
-        banner_text = pyfiglet.figlet_format("PDF Obras", font="slant")
-        print(banner_text)
-
-    def _get_input_paths(self):
-        self.template_path = input("Ingrese la ruta del archivo de plantilla PDF: ")
-        self.output_path = input("Ingrese la ruta de salida para el archivo PDF generado: ")
-        #self.pdf_generator = PDFGenerator(self.template_path, self.output_path)
+        banner_text = pyfiglet.figlet_format("PDF Obras", font="slant")+ \
+        '# pdf-obras @version: {}'.format(__version__)
+        print(Fore.CYAN, banner_text)
 
     def _generate_pdfs(self):
-        # Leer el archivo Excel
-        excel_file = "test.xlsx"  # Definimos la ruta del excell
-        sheet_name = "Hoja1"  # Definimos el nombre de la hoja.
-        conf = Config()
-        df = pd.read_excel(conf.excell_route, sheet_name, engine="openpyxl")
-        df.fillna('N/A', inplace=True)
-        
-        #Leemos los datos necesarios del excell
-        for index, row in tqdm(df.iterrows(), desc="GenerandoPDF Obras",ascii='█', unit=' Obra'):
+        excel_file = Config().excell_route
+        sheet_name = Config().sheet_name
+        df = pd.read_excel(excel_file, sheet_name, engine="openpyxl")
+        df.fillna('', inplace=True)
+        #for df in df.values():
+        #    df.fillna('N/A', inplace=True)
+            
+        for index, row in tqdm(df.iterrows(), desc="GenerandoPDF Obras", ascii='█', unit=' Obras'):
             obra_dto = ObraArteDTO(
                 fecha=row['fecha-de-inspeccion'],
                 firma=row['firma'],
@@ -56,13 +61,21 @@ class PDFGeneratorInterface:
                 registro_fotografico_a=row["registro-foto-a"],
                 registro_fotografico_b=row["registro-foto-b"],
                 artista=row["artista"],
-                valor_comercial=row["valor-comercial"]
+                valor_comercial=row["valor-comercial"],
+                valor_realizacion=row["valor-realizacion"],
+                metodologia=row["metodologia-y-funtes"]
             )
-            gpdf = PDFGenerator("template.pdf", "output/Obra-COD-" + str(obra_dto.codigo) + ".pdf", obra_dto )
+            pdf_output_path = Config().pdf_output_path
+            template_path = Config().template_path
+
+            # Use os.makedirs() with exist_ok=True to create the pdf_output_path directory if it doesn't exist.
+            os.makedirs(pdf_output_path, exist_ok=True)
+
+            output_file = os.path.join(pdf_output_path, f"Obra COD - {str(obra_dto.codigo)}.pdf")
+            gpdf = PDFGenerator(template_path, output_file, obra_dto)
             gpdf.generate_pdf()
+
 
 if __name__ == "__main__":
     interface = PDFGeneratorInterface()
-    conf_loader = Config()
-    conf_loader.render_config()
     interface.run()

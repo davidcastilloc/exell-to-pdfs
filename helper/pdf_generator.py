@@ -49,31 +49,25 @@ class PDFGenerator:
             (253,490, obra.firma),
             (404,541, obra.nacionalidad),
             (404,525, obra.ano_creacion),
-            (404,508, obra.tecnica),
+            (338,508, obra.tecnica),
             (91, 459, obra.observaciones_obra),
             (338,490, obra.medidas),
             (452,490, obra.estado),
-            (91, 214, obra.valor_comercial),
+            (91, 214-23, obra.valor_comercial),
+            (335, 214-23, obra.valor_realizacion),
         ]
         
         textbox = [
-            (91, 288+2, obra.artista),
+            (91, 290, obra.artista),
+            (335, 290, obra.metodologia)
         ]
 
         for x, y, text in textbox:
-            max_chars_per_line = 45
+            max_chars_per_line = 60
             lines = textwrap.wrap(text, max_chars_per_line)
-            count = 0
-            z = 290
             for line in lines:
-                if count<4:
-                    canvas.drawString(x, y, line)
-                    y -= 12
-                    count += 1
-                else:
-                    canvas.drawString(335, z, line)
-                    z -= 12
-                    count=count+1
+                canvas.drawString(x, y, line)
+                y -= 12
 
 
         for x, y, text in fields:
@@ -100,11 +94,11 @@ class PDFGenerator:
             print(f"Image code invalid : {obra.codigo}")
             return
         
-        IMG_A_IN_ROUTE = os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'), f"{obra.registro_fotografico_a:08}.jpg")
-        IMG_A_OUT_ROUTE =  os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'),f"{obra.registro_fotografico_a:08}-opt.jpg")
+        IMG_A_IN_ROUTE = os.path.join(os.getcwd(), Config().img_route, f"{obra.registro_fotografico_a:08}.jpg")
+        IMG_A_OUT_ROUTE =  os.path.join(os.getcwd(), Config().img_route,f"{obra.registro_fotografico_a:08}-opt.jpg")
         
-        IMG_B_IN_ROUTE = os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'), f"{obra.registro_fotografico_b:08}.jpg")
-        IMG_B_OUT_ROUTE =  os.path.join(os.getcwd(), Config().config.get('Data', 'img_route'),f"{obra.registro_fotografico_b:08}-opt.jpg")
+        IMG_B_IN_ROUTE = os.path.join(os.getcwd(), Config().img_route, f"{obra.registro_fotografico_b:08}.jpg")
+        IMG_B_OUT_ROUTE =  os.path.join(os.getcwd(), Config().img_route, f"{obra.registro_fotografico_b:08}-opt.jpg")
         
         #PINTAMOS LA CARA A DE LA OBRA
         if os.path.exists(IMG_A_IN_ROUTE):
